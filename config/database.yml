@@ -1,0 +1,19 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  host: <%= ENV['POSTGRESQL_HOST'] %>
+  database: <%= ENV['POSTGRESQL_DB'] %>
+  username: <%= ENV['POSTGRESQL_USER'] %>
+  password: <%= ENV['POSTGRESQL_PASSWORD'] %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  database: <%= ENV['POSTGRESQL_DB'] %>test
+
+production: &production
+  <<: *default
+  pool: 25
