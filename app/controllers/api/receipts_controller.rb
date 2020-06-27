@@ -39,6 +39,34 @@ module Api
       end
     end
 
+    def summary
+      grouped_by_year = receipts_filtered_by_date.group_by { |receipt| receipt.date.strftime('%Y') }
+      receipts_grouped_by_year_and_month = grouped_by_year.each_with_object({}) do |(year, receipts), hash|
+        receipts_grouped_by_month = receipts.group_by { |receipt| receipt.date.strftime('%B') }
+
+        total_prices_by_month = {}
+        receipts_grouped_by_month.each do |month, monthly_receipts|
+          total_prices_by_month[month] = monthly_receipts.inject(0) { |sum, receipt| sum + receipt.total_price }
+        end
+
+        hash[year] = total_prices_by_month
+      end
+
+      render json: receipts_grouped_by_year_and_month
+    end
+
+    def summary_by_category
+      receipts_ids = receipts_filtered_by_date.pluck(:id)
+      products_by_category = Product.where(receipt_id: receipts_ids).group_by { |product| product.category }
+
+      total_prices_by_category = {}
+      products_by_category.each do |category, category_products|
+        total_prices_by_category[category] = category_products.inject(0) { |sum, product| sum + product.total_price }
+      end
+
+      render json: total_prices_by_category
+    end
+
     def analyze
       # analyzed_image_json_response = HTTParty.post('http://localhost:8080/get-text-detection',
       #                                              body: { encodedImage: params['encodedImage'] }.to_json,
@@ -58,6 +86,14 @@ module Api
 
     def products_params
       permitted_params.to_h[:products].map { |product| product.transform_keys(&:underscore).merge(user: current_user) }
+    end
+
+    def receipts_filtered_by_date
+      if params[:startDate].present? && params[:endDate].present?
+        Receipt.where(user_id: user.id).where('date >= ? and date < ?', params[:startDate], params[:endDate])
+      else
+        Receipt.where(user_id: user.id)
+      end
     end
 
     def mocked_response

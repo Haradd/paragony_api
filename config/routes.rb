@@ -7,6 +7,8 @@ Rails.application.routes.draw do
     resources :receipts, only: [:create, :show, :index, :destroy] do
       collection do
         post :analyze
+        get :summary
+        get :summary_by_category
       end
     end
 
