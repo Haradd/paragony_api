@@ -9,7 +9,7 @@ module Api
       email = get_users_email(access_token)
       user = User.find_by(email: email)
 
-      User.create(email: email, password: '12345677') if user.nil?
+      user = User.create(email: email) if user.nil?
 
       render_token(user)
     end
